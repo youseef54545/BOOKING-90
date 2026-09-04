@@ -3,50 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RED90 Room Bookings</title>
+<title>RED90 Room Bookings — Cloud Realtime</title>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
 <style>
-* {
-    box-sizing: border-box;
-}
-
-body {
-    margin: 0;
-    background: #080808;
-    color: white;
-    font-family: Arial, Tahoma, sans-serif;
-}
-
-.container {
-    max-width: 1550px;
-    margin: auto;
-    padding: 16px;
-}
+* { box-sizing: border-box; }
+body { margin: 0; background: #080808; color: white; font-family: Arial, Tahoma, sans-serif; }
+.container { max-width: 1550px; margin: auto; padding: 16px; }
 
 /* HEADER */
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
-}
-
-.logo {
-    font-size: 36px;
-    font-weight: 900;
-}
-
-.logo span {
-    color: #d20b24;
-}
-
-.subtitle {
-    font-size: 11px;
-    color: #aaa;
-    letter-spacing: 2px;
-}
+.header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 15px; flex-wrap: wrap; }
+.logo { font-size: 36px; font-weight: 900; }
+.logo span { color: #d20b24; }
+.subtitle { font-size: 11px; color: #aaa; letter-spacing: 2px; }
 
 .live-clock-box {
     border: 1px solid #d20b24;
@@ -55,467 +27,125 @@ body {
     padding: 8px 18px;
     text-align: center;
 }
+.live-clock-box span { font-size: 11px; color: #ff8b99; display: block; }
+.live-clock-box b { font-size: 20px; letter-spacing: 1px; color: #fff; }
 
-.live-clock-box span {
-    font-size: 11px;
-    color: #ff8b99;
-    display: block;
-}
+.header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
-.live-clock-box b {
-    font-size: 22px;
-    letter-spacing: 1px;
-    color: #fff;
-}
-
-.date-controls {
-    display: flex;
+.cloud-status {
+    display: inline-flex;
     align-items: center;
     gap: 6px;
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: #151515;
+    border: 1px solid #333;
 }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: #ff9800; display: inline-block; }
+.dot.online { background: #4caf50; }
 
-.date-box {
-    border: 1px solid #444;
-    border-radius: 9px;
-    padding: 7px 12px;
-    text-align: center;
-    background: #111;
-}
-
-.nav-day-btn {
-    background: #1e1e1e;
-    border: 1px solid #444;
+.master-toggle-btn {
+    background: #222;
+    border: 1px solid #555;
     color: white;
-    padding: 7px 10px;
-    border-radius: 6px;
+    padding: 7px 14px;
+    border-radius: 8px;
     cursor: pointer;
     font-weight: bold;
     font-size: 12px;
 }
-
-.nav-day-btn:hover {
-    background: #d20b24;
-    border-color: #d20b24;
+.master-toggle-btn.is-master {
+    background: #2e7d32;
+    border-color: #4caf50;
 }
+
+.date-controls { display: flex; align-items: center; gap: 6px; }
+.date-box { border: 1px solid #444; border-radius: 9px; padding: 7px 12px; text-align: center; background: #111; }
+.nav-day-btn { background: #1e1e1e; border: 1px solid #444; color: white; padding: 7px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; }
+.nav-day-btn:hover { background: #d20b24; border-color: #d20b24; }
 
 /* STATS */
-.stats {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 8px;
-    margin-bottom: 12px;
-}
+.stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 12px; }
+.stat { background: #111; border: 1px solid #333; border-radius: 9px; padding: 10px; text-align: center; }
+.stat span { color: #aaa; font-size: 11px; }
+.stat b { display: block; font-size: 20px; margin-top: 5px; }
 
-.stat {
-    background: #111;
-    border: 1px solid #333;
-    border-radius: 9px;
-    padding: 10px;
-    text-align: center;
-}
-
-.stat span {
-    color: #aaa;
-    font-size: 11px;
-}
-
-.stat b {
-    display: block;
-    font-size: 20px;
-    margin-top: 5px;
-}
-
-/* MAIN */
-.layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 340px;
-    gap: 12px;
-}
-
-.panel {
-    background: #111;
-    border: 1px solid #50101a;
-    border-radius: 11px;
-    overflow: hidden;
-}
+/* LAYOUT */
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 12px; }
+.panel { background: #111; border: 1px solid #50101a; border-radius: 11px; overflow: hidden; }
 
 /* TOOLBAR */
-.toolbar {
-    display: flex;
-    gap: 7px;
-    align-items: center;
-    flex-wrap: wrap;
-    padding: 10px;
-    border-bottom: 1px solid #333;
+.toolbar { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; padding: 10px; border-bottom: 1px solid #333; }
+.toolbar input, .toolbar select, .toolbar button {
+    min-height: 40px; background: #181818; color: white; border: 1px solid #444; border-radius: 7px; padding: 8px 10px;
 }
-
-.toolbar input,
-.toolbar select,
-.toolbar button {
-    min-height: 40px;
-    background: #181818;
-    color: white;
-    border: 1px solid #444;
-    border-radius: 7px;
-    padding: 8px 10px;
-}
-
-.toolbar button {
-    background: #d20b24;
-    border-color: #d20b24;
-    font-weight: bold;
-    cursor: pointer;
-}
+.toolbar button { background: #d20b24; border-color: #d20b24; font-weight: bold; cursor: pointer; }
 
 /* TIMELINE */
-.timeline {
-    overflow-x: auto;
-}
-
-.board {
-    min-width: 1050px;
-}
-
-.hours,
-.room {
-    display: grid;
-    grid-template-columns:
-        80px
-        repeat(18, minmax(54px, 1fr));
-}
-
-.hours {
-    background: #ae071b;
-}
-
-.hours div {
-    padding: 9px 3px;
-    text-align: center;
-    border-left: 1px solid #870f1d;
-    font-size: 11px;
-    font-weight: bold;
-}
-
-.room {
-    height: 82px;
-    border-bottom: 1px solid #292929;
-}
-
-.room-name {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #151515;
-    font-weight: bold;
-    border-left: 1px solid #292929;
-}
-
+.timeline { overflow-x: auto; }
+.board { min-width: 1050px; }
+.hours, .room { display: grid; grid-template-columns: 80px repeat(18, minmax(54px, 1fr)); }
+.hours { background: #ae071b; }
+.hours div { padding: 9px 3px; text-align: center; border-left: 1px solid #870f1d; font-size: 11px; font-weight: bold; }
+.room { height: 82px; border-bottom: 1px solid #292929; }
+.room-name { display: flex; align-items: center; justify-content: center; background: #151515; font-weight: bold; border-left: 1px solid #292929; }
 .track {
-    grid-column: 2 / -1;
-    position: relative;
-    background:
-    repeating-linear-gradient(
-        to left,
-        transparent 0,
-        transparent calc(100% / 18 - 1px),
-        #292929 calc(100% / 18 - 1px),
-        #292929 calc(100% / 18)
-    );
+    grid-column: 2 / -1; position: relative;
+    background: repeating-linear-gradient(to left, transparent 0, transparent calc(100% / 18 - 1px), #292929 calc(100% / 18 - 1px), #292929 calc(100% / 18));
 }
 
-/* BOOKINGS */
 .booking {
-    position: absolute;
-    top: 8px;
-    height: 66px;
-    border-radius: 8px;
-    padding: 7px 8px;
-    overflow: hidden;
-    white-space: nowrap;
-    border: 1px solid rgba(255,255,255,.2);
-    cursor: pointer;
-    transition: transform 0.1s ease, filter 0.1s ease;
+    position: absolute; top: 8px; height: 66px; border-radius: 8px; padding: 7px 8px; overflow: hidden;
+    white-space: nowrap; border: 1px solid rgba(255,255,255,.2);
 }
+.booking.is-clickable { cursor: pointer; }
+.booking.confirmed { background: #c80c23; color: white; }
+.booking.pending { background: #d8aa20; color: #111; }
+.booking.cancelled { background: #291c1e; color: #999; text-decoration: line-through; }
 
-.booking:hover {
-    transform: translateY(-2px);
-    filter: brightness(1.15);
-}
-
-.booking b {
-    display: block;
-    font-size: 12px;
-}
-
-.booking small {
-    font-size: 10px;
-}
-
-.booking.confirmed {
-    background: #c80c23;
-    color: white;
-}
-
-.booking.pending {
-    background: #d8aa20;
-    color: #111;
-}
-
-.booking.done {
-    background: #4b4b4b;
-}
-
-.booking.cancelled {
-    background: #291c1e;
-    color: #999;
-    text-decoration: line-through;
-}
-
-/* FORM */
-.form {
-    padding: 13px;
-    border-top: 1px solid #333;
-}
-
-.form-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.form-header h3 {
-    margin: 0;
-}
-
-.fields {
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 7px;
-}
-
-.fields label {
-    font-size: 11px;
-    color: #aaa;
-    display: block;
-}
-
-.fields input,
-.fields select {
-    width: 100%;
-    margin-top: 4px;
-    background: #181818;
-    color: white;
-    border: 1px solid #444;
-    border-radius: 7px;
-    padding: 8px;
-}
-
-.wide {
-    grid-column: span 2;
-}
-
-.calc-box {
-    background: #181818;
-    border: 1px dashed #555;
-    border-radius: 7px;
-    padding: 6px 10px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 12px;
-    margin-top: 8px;
-}
-
-.calc-box b {
-    color: #49c85a;
-}
-
-.actions {
-    display: flex;
-    gap: 7px;
-    margin-top: 10px;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.actions button {
-    border: 0;
-    border-radius: 7px;
-    padding: 9px 15px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.save {
-    background: #d20b24;
-    color: white;
-}
-
-.clear {
-    background: #292929;
-    color: white;
-}
-
-.cancel-edit {
-    background: #444;
-    color: white;
-    display: none;
-}
-
-#msg {
-    color: #ff9800;
-    font-size: 12px;
-    font-weight: bold;
-}
+/* FORM (MASTER ONLY) */
+.form { padding: 13px; border-top: 1px solid #333; display: none; }
+.form.active { display: block; }
+.fields { display: grid; grid-template-columns: repeat(8, 1fr); gap: 7px; }
+.fields label { font-size: 11px; color: #aaa; }
+.fields input, .fields select { width: 100%; margin-top: 4px; background: #181818; color: white; border: 1px solid #444; border-radius: 7px; padding: 8px; }
+.wide { grid-column: span 2; }
+.actions { display: flex; gap: 7px; margin-top: 10px; align-items: center; flex-wrap: wrap; }
+.actions button { border: 0; border-radius: 7px; padding: 9px 15px; font-weight: bold; cursor: pointer; }
+.save { background: #d20b24; color: white; }
+.clear { background: #292929; color: white; }
+.cancel-edit { background: #444; color: white; display: none; }
+#msg { font-size: 12px; font-weight: bold; }
 
 /* SIDE */
-.side {
-    padding: 12px;
-}
-
-.side-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.side-header h3 {
-    margin: 0;
-}
-
-.mode-tag {
-    font-size: 10px;
-    background: #252525;
-    border: 1px solid #444;
-    padding: 3px 6px;
-    border-radius: 4px;
-    color: #ddd;
-}
-
-.avail-card {
-    border-radius: 8px;
-    padding: 10px;
-    margin-bottom: 8px;
-    border: 1px solid #333;
-    background: #151515;
-}
-
-.avail-card.is-free {
-    border-color: #2e7d32;
-    background: #0f1c11;
-}
-
-.avail-card.is-busy {
-    border-color: #c62828;
-    background: #1f0b0d;
-}
-
-.avail-card b {
-    display: flex;
-    justify-content: space-between;
-    font-size: 14px;
-}
-
-.avail-card small {
-    display: block;
-    margin-top: 4px;
-    font-size: 11px;
-}
-
-.free-text {
-    color: #4caf50;
-    font-weight: bold;
-}
-
-.busy-text {
-    color: #ff5252;
-    font-weight: bold;
-}
-
-.avail-summary {
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 12px;
-    border: 1px solid #444;
-    background: #1c1c1c;
-}
-
-.availability-list {
-    max-height: 470px;
-    overflow-y: auto;
-    padding-left: 2px;
-}
+.side { padding: 12px; }
+.avail-card { border-radius: 8px; padding: 10px; margin-bottom: 8px; border: 1px solid #333; background: #151515; }
+.avail-card.is-free { border-color: #2e7d32; background: #0f1c11; }
+.avail-card.is-busy { border-color: #c62828; background: #1f0b0d; }
+.free-text { color: #4caf50; font-weight: bold; }
+.busy-text { color: #ff5252; font-weight: bold; }
+.avail-summary { padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #444; background: #1c1c1c; }
+.availability-list { max-height: 470px; overflow-y: auto; }
 
 /* TABLE */
-.table-wrapper {
-    margin-top: 12px;
-    overflow-x: auto;
-}
+.table-wrapper { margin-top: 12px; overflow-x: auto; }
+.booking-table { min-width: 900px; width: 100%; border-collapse: collapse; }
+.booking-table th, .booking-table td { border: 1px solid #333; padding: 7px; text-align: center; font-size: 11px; }
+.booking-table th { background: #a9071b; }
+.booking-table button { background: #222; color: white; border: 1px solid #555; border-radius: 5px; padding: 5px 8px; cursor: pointer; }
+.delete { color: #ff6877; margin-right: 4px; }
 
-.booking-table {
-    min-width: 900px;
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.booking-table th,
-.booking-table td {
-    border: 1px solid #333;
-    padding: 7px;
-    text-align: center;
-    font-size: 11px;
-}
-
-.booking-table th {
-    background: #a9071b;
-}
-
-.booking-table button {
-    background: #222;
-    color: white;
-    border: 1px solid #555;
-    border-radius: 5px;
-    padding: 5px 8px;
-    cursor: pointer;
-}
-
-.delete {
-    color: #ff6877;
-    margin-right: 4px;
-}
-
-/* MOBILE */
 @media(max-width:1000px) {
-    .stats {
-        grid-template-columns: repeat(3, 1fr);
-    }
-    .layout {
-        grid-template-columns: 1fr;
-    }
-    .fields {
-        grid-template-columns: repeat(4, 1fr);
-    }
+    .stats { grid-template-columns: repeat(3, 1fr); }
+    .layout { grid-template-columns: 1fr; }
+    .fields { grid-template-columns: repeat(4, 1fr); }
 }
-
 @media(max-width:650px) {
-    .header {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-    .stats {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .fields {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .wide {
-        grid-column: span 2;
-    }
-    .container {
-        padding: 10px;
-    }
+    .header { flex-direction: column; align-items: flex-start; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .fields { grid-template-columns: repeat(2, 1fr); }
+    .wide { grid-column: span 2; }
 }
 </style>
 </head>
@@ -530,16 +160,23 @@ body {
         <div class="subtitle">ROOM BOOKING MANAGER</div>
     </div>
 
-    <!-- LIVE CLOCK -->
     <div class="live-clock-box">
         <span>ساعة النظام الآن</span>
         <b id="liveClock">00:00:00</b>
     </div>
 
+    <div class="header-actions">
+        <div class="cloud-status">
+            <span class="dot" id="cloudDot"></span>
+            <span id="cloudText">جاري الاتصال بالسحابة...</span>
+        </div>
+        <button id="masterBtn" class="master-toggle-btn" onclick="toggleMasterMode()">🔒 وضع المدير</button>
+    </div>
+
     <div class="date-controls">
-        <button class="nav-day-btn" onclick="stepDay(-1)" title="اليوم السابق">◀ أمس</button>
+        <button class="nav-day-btn" onclick="stepDay(-1)">◀ أمس</button>
         <button class="nav-day-btn" onclick="goToday()">اليوم</button>
-        <button class="nav-day-btn" onclick="stepDay(1)" title="اليوم التالي">غداً ▶</button>
+        <button class="nav-day-btn" onclick="stepDay(1)">غداً ▶</button>
         <div class="date-box">
             <span id="dayName">اليوم</span><br>
             <b id="todayLabel"></b>
@@ -549,194 +186,106 @@ body {
 
 <!-- STATS -->
 <section class="stats">
-    <div class="stat">
-        <span>إجمالي حجوزات اليوم</span>
-        <b id="sTotal">0</b>
-    </div>
-    <div class="stat">
-        <span>مؤكد</span>
-        <b id="sConfirmed">0</b>
-    </div>
-    <div class="stat">
-        <span>Pending</span>
-        <b id="sPending">0</b>
-    </div>
-    <div class="stat">
-        <span>إلغاء</span>
-        <b id="sCancelled">0</b>
-    </div>
-    <div class="stat">
-        <span>ديبوزت اليوم</span>
-        <b id="sDeposit">0</b>
-    </div>
-    <div class="stat">
-        <span>مشغول الآن</span>
-        <b id="sBusy">0</b>
-    </div>
+    <div class="stat"><span>إجمالي حجوزات اليوم</span><b id="sTotal">0</b></div>
+    <div class="stat"><span>مؤكد</span><b id="sConfirmed">0</b></div>
+    <div class="stat"><span>Pending</span><b id="sPending">0</b></div>
+    <div class="stat"><span>إلغاء</span><b id="sCancelled">0</b></div>
+    <div class="stat"><span>ديبوزت اليوم</span><b id="sDeposit">0</b></div>
+    <div class="stat"><span>مشغول الآن</span><b id="sBusy">0</b></div>
 </section>
 
 <div class="layout">
 
-<!-- LEFT -->
+<!-- LEFT PANEL -->
 <section class="panel">
-
-<div class="toolbar">
-    <input id="datePick" type="date">
-
-    <select id="roomFilter">
-        <option value="all">كل الرومات</option>
-        <option>C1</option><option>C2</option><option>C3</option>
-        <option>C4</option><option>C5</option><option>C6</option>
-        <option>R1</option><option>R2</option><option>R3</option>
-    </select>
-
-    <select id="statusFilter">
-        <option value="all">كل الحالات</option>
-        <option value="confirmed">مؤكد</option>
-        <option value="pending">Pending</option>
-        <option value="cancelled">ملغي</option>
-        <option value="done">منتهي</option>
-    </select>
-
-    <input id="search" placeholder="🔎 اسم / رقم العميل">
-    
-    <button id="toggleNowBtn" style="background:#222; border-color:#555;">الوقت: الآن (تلقائي)</button>
-    <input id="walkTime" type="time" style="display:none;">
-
-    <button id="findBtn">فحص الرومات</button>
-    <button onclick="window.print()">طباعة اليوم</button>
-    <button id="exportBtn">تصدير CSV</button>
-</div>
-
-<!-- TIMELINE -->
-<div class="timeline">
-    <div class="board" id="board"></div>
-</div>
-
-<!-- FORM -->
-<div class="form">
-    <div class="form-header">
-        <h3 id="formTitle">إضافة حجز جديد</h3>
-        <span style="font-size: 11px; color: #aaa;">(الحفظ دائم لكل يوم ولا يُحذف إلا مانوال)</span>
+    <div class="toolbar">
+        <input id="datePick" type="date">
+        <select id="roomFilter">
+            <option value="all">كل الرومات</option>
+            <option>C1</option><option>C2</option><option>C3</option>
+            <option>C4</option><option>C5</option><option>C6</option>
+            <option>R1</option><option>R2</option><option>R3</option>
+        </select>
+        <select id="statusFilter">
+            <option value="all">كل الحالات</option>
+            <option value="confirmed">مؤكد</option>
+            <option value="pending">Pending</option>
+            <option value="cancelled">ملغي</option>
+        </select>
+        <input id="search" placeholder="🔎 اسم / رقم العميل">
+        <button onclick="window.print()">طباعة اليوم</button>
+        <button id="exportBtn">تصدير CSV</button>
     </div>
 
-    <div class="fields">
-        <label>
-            تاريخ الحجز
-            <input id="fDate" type="date">
-        </label>
-
-        <label>
-            الروم
-            <select id="fRoom">
-                <option>C1</option><option>C2</option><option>C3</option>
-                <option>C4</option><option>C5</option><option>C6</option>
-                <option>R1</option><option>R2</option><option>R3</option>
-            </select>
-        </label>
-
-        <label class="wide">
-            اسم العميل
-            <input id="fName" placeholder="اسم العميل">
-        </label>
-
-        <label class="wide">
-            رقم الهاتف
-            <input id="fPhone" placeholder="01xxxxxxxxx">
-        </label>
-
-        <label>
-            من
-            <input id="fFrom" type="time" value="20:00">
-        </label>
-
-        <label>
-            إلى
-            <input id="fTo" type="time" value="22:00">
-        </label>
-
-        <label>
-            الديبوزت
-            <input id="fDep" type="number" min="0" value="0">
-        </label>
-
-        <label>
-            طريقة الدفع
-            <select id="fPay">
-                <option>Cash</option>
-                <option>InstaPay</option>
-                <option>Vodafone Cash</option>
-                <option>Visa</option>
-            </select>
-        </label>
-
-        <label>
-            الحالة
-            <select id="fStatus">
-                <option value="confirmed">مؤكد</option>
-                <option value="pending">Pending</option>
-                <option value="cancelled">ملغي</option>
-                <option value="done">منتهي</option>
-            </select>
-        </label>
-
-        <label class="wide">
-            ملاحظات
-            <input id="fNotes" placeholder="عيد ميلاد / دراعات إضافية / طلبات...">
-        </label>
+    <div class="timeline">
+        <div class="board" id="board"></div>
     </div>
 
-    <!-- CALCULATION PREVIEW -->
-    <div class="calc-box">
-        <span>مدة الحجز: <b id="calcDuration">2 ساعة</b></span>
-        <span>الديبوزت المدفوع: <b id="calcDepPreview">0 EGP</b></span>
-    </div>
+    <!-- FORM (ONLY VISIBLE ON MASTER DEVICE) -->
+    <div class="form" id="masterForm">
+        <h3 id="formTitle" style="margin-top:0;">إضافة حجز جديد (لوحة الماستر)</h3>
+        <div class="fields">
+            <label>تاريخ الحجز <input id="fDate" type="date"></label>
+            <label>الروم
+                <select id="fRoom">
+                    <option>C1</option><option>C2</option><option>C3</option>
+                    <option>C4</option><option>C5</option><option>C6</option>
+                    <option>R1</option><option>R2</option><option>R3</option>
+                </select>
+            </label>
+            <label class="wide">اسم العميل <input id="fName" placeholder="اسم العميل"></label>
+            <label class="wide">رقم الهاتف <input id="fPhone" placeholder="01xxxxxxxxx"></label>
+            <label>من <input id="fFrom" type="time" value="20:00"></label>
+            <label>إلى <input id="fTo" type="time" value="22:00"></label>
+            <label>الديبوزت <input id="fDep" type="number" min="0" value="0"></label>
+            <label>طريقة الدفع
+                <select id="fPay">
+                    <option>Cash</option>
+                    <option>InstaPay</option>
+                    <option>Vodafone Cash</option>
+                    <option>Visa</option>
+                </select>
+            </label>
+            <label>الحالة
+                <select id="fStatus">
+                    <option value="confirmed">مؤكد</option>
+                    <option value="pending">Pending</option>
+                    <option value="cancelled">ملغي</option>
+                </select>
+            </label>
+            <label class="wide">ملاحظات <input id="fNotes" placeholder="عيد ميلاد / دراعات..."></label>
+        </div>
 
-    <div class="actions">
-        <button class="save" id="saveBtn">+ إضافة الحجز</button>
-        <button class="cancel-edit" id="cancelEditBtn">إلغاء التعديل</button>
-        <button class="clear" id="clearForm">تفريغ الحقول</button>
-        <span id="msg"></span>
+        <div class="actions">
+            <button class="save" id="saveBtn">+ إضافة الحجز</button>
+            <button class="cancel-edit" id="cancelEditBtn">إلغاء التعديل</button>
+            <button class="clear" id="clearForm">تفريغ الحقول</button>
+            <span id="msg"></span>
+        </div>
     </div>
-</div>
-
 </section>
 
-<!-- SIDE -->
+<!-- RIGHT PANEL -->
 <aside class="panel side">
-    <div class="side-header">
-        <h3>⚡ أقرب روم متاح</h3>
-        <span class="mode-tag" id="checkModeLabel">الآن حسب الساعة</span>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="margin:0;">⚡ أقرب روم متاح</h3>
+        <span style="font-size:11px; color:#aaa;">مباشر الآن</span>
     </div>
-
-    <!-- MAIN BEST PICK -->
-    <div id="result" class="avail-summary">
-        <b>جاري الفحص...</b>
-    </div>
-
-    <h3 style="margin: 12px 0 8px;">حالة الرومات في هذا الوقت</h3>
+    <div id="result" class="avail-summary"><b>جاري فحص التوفر...</b></div>
+    <h3 style="margin: 12px 0 8px;">حالة الرومات الآن</h3>
     <div id="availability" class="availability-list"></div>
 </aside>
 
 </div>
 
-<!-- BOOKINGS TABLE -->
+<!-- TABLE -->
 <div class="panel table-wrapper">
     <table class="booking-table">
         <thead>
             <tr>
-                <th>التاريخ</th>
-                <th>الروم</th>
-                <th>العميل</th>
-                <th>الهاتف</th>
-                <th>من</th>
-                <th>إلى</th>
-                <th>المدة</th>
-                <th>الديبوزت</th>
-                <th>طريقة الدفع</th>
-                <th>الحالة</th>
-                <th>ملاحظات</th>
-                <th>إجراء مانوال</th>
+                <th>التاريخ</th><th>الروم</th><th>العميل</th><th>الهاتف</th>
+                <th>من</th><th>إلى</th><th>الديبوزت</th><th>الدفع</th><th>الحالة</th><th>ملاحظات</th>
+                <th id="thAction">إجراء</th>
             </tr>
         </thead>
         <tbody id="bookingTable"></tbody>
@@ -746,30 +295,81 @@ body {
 </div>
 
 <script>
-/* =========================
-   SETTINGS & PERSISTENCE
-========================= */
-const ROOMS = ["C1", "C2", "C3", "C4", "C5", "C6", "R1", "R2", "R3"];
-const STORAGE_KEY = "RED90_BOOKINGS_PERMANENT_V1";
+/* ==========================================================
+   1. FIREBASE CONFIGURATION & MASTER SECURITY
+========================================================== */
+const MASTER_PIN = "9090"; // الباسورد الخاص بجهاز الماستر (يمكنك تغييره هنا)
 
+const firebaseConfig = {
+  apiKey: "AIzaSyBsoI6zAZkq-jk89Ahire3GcvzEGxHJYTM",
+  authDomain: "red90-booking.firebaseapp.com",
+  databaseURL: "https://red90-booking-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "red90-booking",
+  storageBucket: "red90-booking.firebasestorage.app",
+  messagingSenderId: "788754079573",
+  appId: "1:788754079573:web:10ee73c1d442ef8c9b19dc",
+  measurementId: "G-VKMY5FFM2Y"
+};
+
+let db = null;
+try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+} catch (err) {
+    console.error("Firebase init failed:", err);
+}
+
+const ROOMS = ["C1", "C2", "C3", "C4", "C5", "C6", "R1", "R2", "R3"];
 let bookings = [];
 let editId = null;
-let useRealtimeNow = true;
+let isMaster = localStorage.getItem("RED90_IS_MASTER") === "true";
 
-function $(id) {
-    return document.getElementById(id);
+function $(id) { return document.getElementById(id); }
+
+function updateMasterUI() {
+    if (isMaster) {
+        $("masterBtn").textContent = "🔓 جهاز ماستر (خروج)";
+        $("masterBtn").className = "master-toggle-btn is-master";
+        $("masterForm").classList.add("active");
+        $("thAction").style.display = "";
+    } else {
+        $("masterBtn").textContent = "🔒 وضع المدير";
+        $("masterBtn").className = "master-toggle-btn";
+        $("masterForm").classList.remove("active");
+        $("thAction").style.display = "none";
+    }
+}
+
+function toggleMasterMode() {
+    if (isMaster) {
+        if (confirm("هل تريد تسجيل الخروج من وضع الماستر على هذا الجهاز؟")) {
+            isMaster = false;
+            localStorage.removeItem("RED90_IS_MASTER");
+            updateMasterUI();
+            renderAll();
+        }
+    } else {
+        let pin = prompt("أدخل كود الماستر (PIN):");
+        if (pin === MASTER_PIN) {
+            isMaster = true;
+            localStorage.setItem("RED90_IS_MASTER", "true");
+            alert("تم تفعيل جهاز الماستر بنجاح! لديك الآن صلاحية الإضافة والتعديل.");
+            updateMasterUI();
+            renderAll();
+        } else if (pin !== null) {
+            alert("الكود غير صحيح!");
+        }
+    }
 }
 
 function today() {
     let d = new Date();
-    let month = String(d.getMonth() + 1).padStart(2, '0');
-    let day = String(d.getDate()).padStart(2, '0');
-    return `${d.getFullYear()}-${month}-${day}`;
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
 function minutes(time) {
     let [h, m] = time.split(":").map(Number);
-    if (h < 6) h += 24; // معالجة أوقات بعد منتصف الليل
+    if (h < 6) h += 24;
     return h * 60 + m;
 }
 
@@ -778,48 +378,71 @@ function formatMinutes(x) {
     let h = Math.floor(x / 60);
     let m = x % 60;
     let period = h >= 12 ? "م" : "ص";
-    h = h % 12 || 12;
-    return h + ":" + String(m).padStart(2, "0") + " " + period;
+    return (h % 12 || 12) + ":" + String(m).padStart(2, "0") + " " + period;
 }
 
-function formatTime(time) {
-    return formatMinutes(minutes(time));
-}
-
-function getDurationHours(from, to) {
-    let s = minutes(from);
-    let e = minutes(to);
-    if (e <= s) e += 1440;
-    return (e - s) / 60;
-}
+function formatTime(time) { return formatMinutes(minutes(time)); }
 
 function escapeHTML(text) {
-    return String(text || "").replace(/[&<>"']/g, function(char) {
-        return {
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#039;"
-        }[char];
+    return String(text || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+}
+
+/* ==========================================================
+   2. REALTIME CLOUD SYNC
+========================================================== */
+if (db) {
+    db.ref(".info/connected").on("value", function(snap) {
+        if (snap.val() === true) {
+            $("cloudDot").className = "dot online";
+            $("cloudText").textContent = "متصل بالسحابة اللحظية";
+        } else {
+            $("cloudDot").className = "dot";
+            $("cloudText").textContent = "جاري الاتصال...";
+        }
+    });
+
+    db.ref("bookings").on("value", function(snapshot) {
+        let val = snapshot.val();
+        bookings = [];
+        if (val) {
+            Object.keys(val).forEach(key => {
+                bookings.push({ id: key, ...val[key] });
+            });
+        }
+        renderAll();
     });
 }
 
-/* =========================
-   LIVE CLOCK
-========================= */
+function saveToCloud(data, id = null) {
+    if (!isMaster) {
+        alert("غير مسموح: هذا الجهاز للعرض فقط!");
+        return;
+    }
+    if (id) {
+        db.ref("bookings/" + id).set(data);
+    } else {
+        db.ref("bookings").push(data);
+    }
+}
+
+function deleteFromCloud(id) {
+    if (!isMaster) {
+        alert("غير مسموح: هذا الجهاز للعرض فقط!");
+        return;
+    }
+    db.ref("bookings/" + id).remove();
+}
+
+/* ==========================================================
+   3. CLOCK & INTERFACE
+========================================================== */
 function updateLiveClock() {
     let now = new Date();
     let h = now.getHours();
     let m = String(now.getMinutes()).padStart(2, '0');
     let s = String(now.getSeconds()).padStart(2, '0');
-    let period = h >= 12 ? "م" : "ص";
-    let h12 = h % 12 || 12;
-    
-    $("liveClock").textContent = `${h12}:${m}:${s} ${period}`;
-    
-    // لو وضع "الآن" مفعل، حدث فحص الرومات كل دقيقة تلقائياً
-    if (useRealtimeNow && now.getSeconds() === 0) {
+    $("liveClock").textContent = `${h % 12 || 12}:${m}:${s} ${h >= 12 ? "م" : "ص"}`;
+    if (now.getSeconds() === 0) {
         renderAvailability();
         renderStats();
     }
@@ -827,41 +450,10 @@ function updateLiveClock() {
 setInterval(updateLiveClock, 1000);
 updateLiveClock();
 
-/* =========================
-   PERMANENT STORAGE ENGINE
-========================= */
-function saveBookings() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
-}
-
-function loadBookings() {
-    try {
-        let data = localStorage.getItem(STORAGE_KEY);
-        bookings = data ? JSON.parse(data) : [];
-        if (!Array.isArray(bookings)) bookings = [];
-    } catch (e) {
-        console.error("Storage load error:", e);
-        bookings = [];
-    }
-}
-
-window.addEventListener("storage", function(e) {
-    if (e.key === STORAGE_KEY) {
-        loadBookings();
-        renderAll();
-    }
-});
-
-/* =========================
-   DATE NAVIGATION
-========================= */
 function stepDay(offset) {
     let cur = new Date(($("datePick").value || today()) + "T00:00:00");
     cur.setDate(cur.getDate() + offset);
-    let month = String(cur.getMonth() + 1).padStart(2, '0');
-    let day = String(cur.getDate()).padStart(2, '0');
-    let str = `${cur.getFullYear()}-${month}-${day}`;
-    
+    let str = `${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}-${String(cur.getDate()).padStart(2,'0')}`;
     $("datePick").value = str;
     $("fDate").value = str;
     renderAll();
@@ -881,380 +473,228 @@ function updateDate() {
     $("dayName").textContent = d.toLocaleDateString("ar-EG", { weekday: "long" });
 }
 
-/* =========================
-   OVERLAP CHECK
-========================= */
 function overlap(a, b) {
-    let as = minutes(a.from);
-    let ae = minutes(a.to);
+    let as = minutes(a.from), ae = minutes(a.to);
     if (ae <= as) ae += 1440;
-
-    let bs = minutes(b.from);
-    let be = minutes(b.to);
+    let bs = minutes(b.from), be = minutes(b.to);
     if (be <= bs) be += 1440;
-
     return as < be && ae > bs;
 }
 
-/* =========================
-   FILTER FOR CURRENT DAY
-========================= */
 function visibleBookings() {
     let date = $("datePick").value || today();
     let room = $("roomFilter").value;
     let status = $("statusFilter").value;
     let search = $("search").value.trim().toLowerCase();
 
-    return bookings.filter(function(b) {
-        return (
-            (b.date || today()) === date &&
-            (room === "all" || b.room === room) &&
-            (status === "all" || b.status === status) &&
-            (!search || b.name.toLowerCase().includes(search) || (b.phone && b.phone.toLowerCase().includes(search)))
-        );
-    });
+    return bookings.filter(b => (
+        (b.date || today()) === date &&
+        (room === "all" || b.room === room) &&
+        (status === "all" || b.status === status) &&
+        (!search || b.name.toLowerCase().includes(search) || (b.phone && b.phone.includes(search)))
+    ));
 }
 
-/* =========================
-   TIMELINE
-========================= */
+/* ==========================================================
+   4. RENDER TIMELINE, TABLE, & AVAILABILITY
+========================================================== */
 function renderTimeline() {
     const board = $("board");
     board.innerHTML = "";
 
     const hours = document.createElement("div");
     hours.className = "hours";
-
-    const roomTitle = document.createElement("div");
-    roomTitle.textContent = "الروم";
-    hours.appendChild(roomTitle);
-
+    hours.innerHTML = `<div>الروم</div>`;
     for (let h = 11; h <= 28; h++) {
         let hour = h % 24;
-        let cell = document.createElement("div");
-        cell.textContent = (hour % 12 || 12) + (hour >= 12 ? " م" : " ص");
-        hours.appendChild(cell);
+        hours.innerHTML += `<div>${hour % 12 || 12} ${hour >= 12 ? "م" : "ص"}</div>`;
     }
     board.appendChild(hours);
 
     let filter = $("roomFilter").value;
-
-    ROOMS.filter(room => filter === "all" || room === filter).forEach(function(room) {
+    ROOMS.filter(r => filter === "all" || r === filter).forEach(room => {
         const row = document.createElement("div");
         row.className = "room";
-
-        const name = document.createElement("div");
-        name.className = "room-name";
-        name.textContent = room;
-
+        row.innerHTML = `<div class="room-name">${room}</div>`;
         const track = document.createElement("div");
         track.className = "track";
 
-        visibleBookings()
-            .filter(b => b.room === room && b.status !== "cancelled")
-            .forEach(function(b) {
-                const dayStart = 11 * 60;
-                const dayEnd = 28 * 60;
+        visibleBookings().filter(b => b.room === room && b.status !== "cancelled").forEach(b => {
+            const dayStart = 11 * 60, dayEnd = 28 * 60;
+            let start = minutes(b.from), end = minutes(b.to);
+            if (end <= start) end += 1440;
 
-                let start = minutes(b.from);
-                let end = minutes(b.to);
-                if (end <= start) end += 1440;
+            let s = Math.max(dayStart, start), e = Math.min(dayEnd, end);
+            if (e <= dayStart || s >= dayEnd) return;
 
-                let s = Math.max(dayStart, start);
-                let e = Math.min(dayEnd, end);
-                if (e <= dayStart || s >= dayEnd) return;
+            const box = document.createElement("div");
+            box.className = "booking " + b.status + (isMaster ? " is-clickable" : "");
+            box.style.right = ((s - dayStart) / (dayEnd - dayStart) * 100) + "%";
+            box.style.width = ((e - s) / (dayEnd - dayStart) * 100) + "%";
+            box.innerHTML = `<b>${escapeHTML(b.name)}</b><small>${formatTime(b.from)} → ${formatTime(b.to)}</small>`;
+            if (isMaster) {
+                box.onclick = () => editBooking(b.id);
+                box.title = "اضغط لتعديل الحجز";
+            }
+            track.appendChild(box);
+        });
 
-                const booking = document.createElement("div");
-                booking.className = "booking " + b.status;
-                booking.style.right = ((s - dayStart) / (dayEnd - dayStart) * 100) + "%";
-                booking.style.width = ((e - s) / (dayEnd - dayStart) * 100) + "%";
-
-                booking.innerHTML =
-                    "<b>" + escapeHTML(b.name) + "</b>" +
-                    "<small>" + formatTime(b.from) + " → " + formatTime(b.to) + "</small>";
-
-                booking.title = "اضغط لتعديل هذا الحجز";
-                booking.onclick = function() {
-                    editBooking(b.id);
-                };
-
-                track.appendChild(booking);
-            });
-
-        row.appendChild(name);
         row.appendChild(track);
         board.appendChild(row);
     });
 }
 
-/* =========================
-   TABLE
-========================= */
 function renderTable() {
     let rows = visibleBookings();
     const table = $("bookingTable");
     table.innerHTML = "";
 
     if (!rows.length) {
-        table.innerHTML = `<tr><td colspan="12" style="padding:20px; color:#aaa;">لا توجد أي حجوزات مسجلة لهذا اليوم.</td></tr>`;
+        table.innerHTML = `<tr><td colspan="11" style="padding:15px; color:#aaa;">لا توجد أي حجوزات لهذا اليوم.</td></tr>`;
         return;
     }
 
-    rows.sort((a, b) => minutes(a.from) - minutes(b.from)).forEach(function(b) {
-        let dur = getDurationHours(b.from, b.to);
-        let dep = Number(b.deposit || 0);
-
+    rows.sort((a,b) => minutes(a.from) - minutes(b.from)).forEach(b => {
         let tr = document.createElement("tr");
-        tr.innerHTML =
-            "<td>" + escapeHTML(b.date || today()) + "</td>" +
-            "<td><b>" + escapeHTML(b.room) + "</b></td>" +
-            "<td>" + escapeHTML(b.name) + "</td>" +
-            "<td>" + escapeHTML(b.phone || "—") + "</td>" +
-            "<td>" + formatTime(b.from) + "</td>" +
-            "<td>" + formatTime(b.to) + "</td>" +
-            "<td>" + dur.toFixed(1) + " س</td>" +
-            "<td>" + dep.toLocaleString() + " EGP</td>" +
-            "<td>" + escapeHTML(b.pay) + "</td>" +
-            "<td>" + statusName(b.status) + "</td>" +
-            "<td>" + escapeHTML(b.notes || "—") + "</td>" +
-            "<td>" +
-                `<button onclick="editBooking('${b.id}')">تعديل</button>` +
-                `<button class="delete" onclick="deleteBooking('${b.id}', '${escapeHTML(b.name)}')">حذف مانوال</button>` +
-            "</td>";
+        let actionButtons = isMaster ? `
+            <td>
+                <button onclick="editBooking('${b.id}')">تعديل</button>
+                <button class="delete" onclick="deleteBooking('${b.id}', '${escapeHTML(b.name)}')">حذف</button>
+            </td>
+        ` : ``;
 
+        tr.innerHTML = `
+            <td>${b.date}</td>
+            <td><b>${b.room}</b></td>
+            <td>${escapeHTML(b.name)}</td>
+            <td>${escapeHTML(b.phone || "—")}</td>
+            <td>${formatTime(b.from)}</td>
+            <td>${formatTime(b.to)}</td>
+            <td>${Number(b.deposit || 0).toLocaleString()} EGP</td>
+            <td>${b.pay}</td>
+            <td>${b.status === "confirmed" ? "مؤكد" : (b.status === "pending" ? "Pending" : "ملغي")}</td>
+            <td>${escapeHTML(b.notes || "—")}</td>
+            ${actionButtons}
+        `;
         table.appendChild(tr);
     });
 }
 
-function statusName(status) {
-    if (status === "confirmed") return "مؤكد";
-    if (status === "pending") return "Pending";
-    if (status === "cancelled") return "ملغي";
-    return "منتهي";
-}
-
-/* =====================================
-   AVAILABILITY & BEST ROOM LOGIC (DYNAMIC)
-===================================== */
-function getTargetCheckMinutes() {
-    if (useRealtimeNow) {
-        let now = new Date();
-        let m = now.getHours() * 60 + now.getMinutes();
-        if (now.getHours() < 6) m += 1440;
-        return m;
-    } else {
-        return minutes($("walkTime").value || "19:30");
-    }
-}
-
 function renderAvailability() {
     let date = $("datePick").value || today();
-    let target = getTargetCheckMinutes();
+    let now = new Date();
+    let target = now.getHours() * 60 + now.getMinutes();
+    if (now.getHours() < 6) target += 1440;
+
     let roomStatusList = [];
 
-    ROOMS.forEach(function(room) {
-        // جميع الحجوزات النشطة للروم في اليوم المحدد
-        let activeBookings = bookings.filter(function(b) {
-            return (
-                (b.date || today()) === date &&
-                b.room === room &&
-                b.status !== "cancelled" &&
-                b.status !== "done"
-            );
-        });
-
-        // هل يوجد حجز جاري في هذا الوقت المحدد؟
-        let currentBooking = activeBookings.find(function(b) {
-            let start = minutes(b.from);
-            let end = minutes(b.to);
-            if (end <= start) end += 1440;
-            return target >= start && target < end;
+    ROOMS.forEach(room => {
+        let activeBookings = bookings.filter(b => b.date === date && b.room === room && b.status !== "cancelled");
+        let currentBooking = activeBookings.find(b => {
+            let s = minutes(b.from), e = minutes(b.to);
+            if (e <= s) e += 1440;
+            return target >= s && target < e;
         });
 
         if (currentBooking) {
-            let end = minutes(currentBooking.to);
-            if (end <= minutes(currentBooking.from)) end += 1440;
             roomStatusList.push({
-                room: room,
-                isFree: false,
-                freeAt: end,
-                bookedUntil: currentBooking.to,
-                customer: currentBooking.name
+                room: room, isFree: false, bookedUntil: currentBooking.to, customer: currentBooking.name
             });
         } else {
-            // الروم فاضية حالياً: نبحث عن أقرب حجز قادم بعدها
-            let upcomingBookings = activeBookings.filter(function(b) {
-                return minutes(b.from) > target;
-            }).sort((a, b) => minutes(a.from) - minutes(b.from));
-
-            let nextBooking = upcomingBookings[0] || null;
-
+            let upcoming = activeBookings.filter(b => minutes(b.from) > target).sort((a,b) => minutes(a.from) - minutes(b.from));
             roomStatusList.push({
-                room: room,
-                isFree: true,
-                freeAt: target,
-                nextBookingAt: nextBooking ? nextBooking.from : null
+                room: room, isFree: true, nextBookingAt: upcoming[0] ? upcoming[0].from : null
             });
         }
     });
 
-    // ترتيب القائمة: الفاضي أولاً، ثم المحجوز حسب الأقرب انتهاءً
-    roomStatusList.sort((a, b) => {
-        if (a.isFree && !b.isFree) return -1;
-        if (!a.isFree && b.isFree) return 1;
-        return a.freeAt - b.freeAt;
-    });
+    roomStatusList.sort((a, b) => (a.isFree === b.isFree ? 0 : a.isFree ? -1 : 1));
 
-    // عرض القائمة بالكامل
-    $("availability").innerHTML = roomStatusList.map(function(item) {
+    $("availability").innerHTML = roomStatusList.map(item => {
         if (item.isFree) {
-            let untilText = item.nextBookingAt ? ` (متاحة حتى ${formatTime(item.nextBookingAt)})` : ` (متاحة لباقي اليوم)`;
+            let info = item.nextBookingAt ? `(متاحة حتى ${formatTime(item.nextBookingAt)})` : `(متاحة لباقي اليوم)`;
             return `
             <div class="avail-card is-free">
                 <b><span>${item.room}</span> <span class="free-text">متاحة الآن ✅</span></b>
-                <small style="color:#aaa;">فاضية تماماً${untilText}</small>
+                <small style="color:#aaa;">فاضية تماماً ${info}</small>
             </div>`;
         } else {
             return `
             <div class="avail-card is-busy">
                 <b><span>${item.room}</span> <span class="busy-text">محجوزة ❌</span></b>
-                <small class="busy-text">للأسف الروم دي محجوزة للساعة ${formatTime(item.bookedUntil)}</small>
-                <small style="color:#888;">حجز باسم: ${escapeHTML(item.customer)}</small>
+                <small class="busy-text">للأسف محجوزة للساعة ${formatTime(item.bookedUntil)}</small>
+                <small style="color:#888;">العميل: ${escapeHTML(item.customer)}</small>
             </div>`;
         }
     }).join("");
 
-    // عرض النتيجة الأفضل في الصندوق العلوي
     let bestFree = roomStatusList.find(x => x.isFree);
-    let timeLabel = useRealtimeNow ? "الوقت الحالي" : formatMinutes(target % 1440);
-
     if (bestFree) {
         $("result").innerHTML = `
             <b style="color:#4caf50; font-size:16px;">🔥 أفضل خيار: ${bestFree.room} متاحة فوراً</b>
             <small style="display:block; margin-top:5px; color:#ddd;">
-                ${bestFree.nextBookingAt ? `الروم فاضية وتقدر تقعد فيها لحد الساعة ${formatTime(bestFree.nextBookingAt)}.` : `الروم فاضية ومفيش أي حجوزات تانية وراها اليوم.`}
+                ${bestFree.nextBookingAt ? `فاضية لحد الساعة ${formatTime(bestFree.nextBookingAt)}.` : `فاضية ومفيش أي حجوزات وراها اليوم.`}
             </small>
         `;
     } else {
-        let nearestFree = roomStatusList[0]; // أقرب واحدة هتفضى
         $("result").innerHTML = `
-            <b style="color:#ff5252; font-size:15px;">⚠️ كل الرومات مشغولة في ${timeLabel}</b>
-            <small style="display:block; margin-top:5px; color:#ddd;">
-                للأسف كل الرومات محجوزة. أقرب روم هتفضى هي <b>${nearestFree.room}</b> الساعة <b>${formatTime(nearestFree.bookedUntil)}</b>.
-            </small>
+            <b style="color:#ff5252; font-size:15px;">⚠️ كل الرومات مشغولة الآن</b>
+            <small style="display:block; margin-top:5px; color:#ddd;">يرجى مراجعة الجدول لمعرفة أقرب وقت لانتهاء الجلسات.</small>
         `;
     }
 }
 
-/* =========================
-   TOGGLE TIME MODE
-========================= */
-$("toggleNowBtn").onclick = function() {
-    useRealtimeNow = !useRealtimeNow;
-    if (useRealtimeNow) {
-        this.textContent = "الوقت: الآن (تلقائي)";
-        this.style.background = "#222";
-        this.style.borderColor = "#555";
-        $("walkTime").style.display = "none";
-        $("checkModeLabel").textContent = "الآن حسب الساعة";
-    } else {
-        this.textContent = "الوقت: يدوي ⏱";
-        this.style.background = "#870f1d";
-        this.style.borderColor = "#d20b24";
-        $("walkTime").style.display = "inline-block";
-        let now = new Date();
-        let h = String(now.getHours()).padStart(2, '0');
-        let m = String(now.getMinutes()).padStart(2, '0');
-        $("walkTime").value = `${h}:${m}`;
-        $("checkModeLabel").textContent = "وقت مخصص";
-    }
-    renderAvailability();
-};
-
-/* =========================
-   CALCULATION PREVIEW
-========================= */
-function updateCalculations() {
-    let from = $("fFrom").value;
-    let to = $("fTo").value;
-    let dep = Number($("fDep").value || 0);
-
-    let dur = getDurationHours(from, to);
-    $("calcDuration").textContent = dur.toFixed(1) + " ساعة";
-    $("calcDepPreview").textContent = dep.toLocaleString() + " EGP";
-}
-
-/* =========================
-   STATS
-========================= */
 function renderStats() {
     let date = $("datePick").value || today();
-    let arr = bookings.filter(b => (b.date || today()) === date);
-
+    let arr = bookings.filter(b => b.date === date);
     let active = arr.filter(b => b.status !== "cancelled");
-    let confirmed = arr.filter(b => b.status === "confirmed");
-    let pending = arr.filter(b => b.status === "pending");
-    let cancelled = arr.filter(b => b.status === "cancelled");
-
-    let deposit = active.reduce((sum, b) => sum + Number(b.deposit || 0), 0);
 
     $("sTotal").textContent = active.length;
-    $("sConfirmed").textContent = confirmed.length;
-    $("sPending").textContent = pending.length;
-    $("sCancelled").textContent = cancelled.length;
-    $("sDeposit").textContent = deposit.toLocaleString() + " EGP";
+    $("sConfirmed").textContent = active.filter(b => b.status === "confirmed").length;
+    $("sPending").textContent = active.filter(b => b.status === "pending").length;
+    $("sCancelled").textContent = arr.filter(b => b.status === "cancelled").length;
+    $("sDeposit").textContent = active.reduce((s, b) => s + Number(b.deposit || 0), 0).toLocaleString() + " EGP";
 
-    let nowDate = new Date();
-    let now = nowDate.getHours() * 60 + nowDate.getMinutes();
-    if (nowDate.getHours() < 6) now += 1440;
+    let now = new Date();
+    let t = now.getHours() * 60 + now.getMinutes();
+    if (now.getHours() < 6) t += 1440;
 
     let busy = new Set();
-    active.forEach(function(b) {
-        let s = minutes(b.from);
-        let e = minutes(b.to);
+    active.forEach(b => {
+        let s = minutes(b.from), e = minutes(b.to);
         if (e <= s) e += 1440;
-        if (now >= s && now < e) busy.add(b.room);
+        if (t >= s && t < e) busy.add(b.room);
     });
-
     $("sBusy").textContent = busy.size;
 }
 
-/* =========================
-   CLEAR & RESET
-========================= */
+/* ==========================================================
+   5. ACTIONS & MASTER FORM CONTROLS
+========================================================= */
 function clearForm() {
     editId = null;
-    $("formTitle").textContent = "إضافة حجز جديد";
+    $("formTitle").textContent = "إضافة حجز جديد (لوحة الماستر)";
     $("saveBtn").textContent = "+ إضافة الحجز";
     $("cancelEditBtn").style.display = "none";
     $("msg").textContent = "";
-
     $("fDate").value = $("datePick").value || today();
     $("fName").value = "";
     $("fPhone").value = "";
     $("fFrom").value = "20:00";
     $("fTo").value = "22:00";
     $("fDep").value = "0";
-    $("fPay").value = "Cash";
-    $("fStatus").value = "confirmed";
     $("fNotes").value = "";
-
-    updateCalculations();
 }
 
-/* =========================
-   EDIT
-========================= */
 function editBooking(id) {
+    if (!isMaster) return;
     let b = bookings.find(x => x.id === id);
     if (!b) return;
-
     editId = id;
-    $("formTitle").textContent = "تعديل الحجز: " + b.name + " (" + b.room + ")";
-    $("saveBtn").textContent = "حفظ التعديل";
+    $("formTitle").textContent = "تعديل حجز: " + b.name;
+    $("saveBtn").textContent = "حفظ التعديل سحابياً";
     $("cancelEditBtn").style.display = "inline-block";
-
-    $("fDate").value = b.date || today();
+    $("fDate").value = b.date;
     $("fRoom").value = b.room;
     $("fName").value = b.name;
     $("fPhone").value = b.phone || "";
@@ -1264,29 +704,21 @@ function editBooking(id) {
     $("fPay").value = b.pay;
     $("fStatus").value = b.status;
     $("fNotes").value = b.notes || "";
-
-    updateCalculations();
-    $("msg").textContent = "وضع التعديل مفعل...";
     document.querySelector(".form").scrollIntoView({ behavior: "smooth" });
 }
 
-/* =========================
-   MANUAL DELETE ONLY
-========================= */
 function deleteBooking(id, name) {
-    let promptMsg = `هل تريد بالتأكيد حذف حجز العميل (${name}) نهائياً؟\nلن يمكن استرجاع هذا الحجز بعد الحذف.`;
-    if (!confirm(promptMsg)) return;
-
-    bookings = bookings.filter(b => b.id !== id);
-    saveBookings();
+    if (!isMaster) return;
+    if (!confirm(`هل تريد بالتأكيد حذف حجز (${name})؟ سيتم الحذف من جميع الأجهزة فوراً.`)) return;
+    deleteFromCloud(id);
     if (editId === id) clearForm();
-    renderAll();
 }
 
-/* =========================
-   SAVE BOOKING
-========================= */
 $("saveBtn").onclick = function() {
+    if (!isMaster) {
+        alert("غير مسموح: هذا الجهاز للعرض فقط!");
+        return;
+    }
     let targetDate = $("fDate").value || $("datePick").value || today();
     let room = $("fRoom").value;
     let name = $("fName").value.trim();
@@ -1296,131 +728,37 @@ $("saveBtn").onclick = function() {
     let status = $("fStatus").value;
 
     if (!name || !from || !to) {
-        $("msg").textContent = "⚠️ يرجى إدخال اسم العميل وتحديد وقت البداية والنهاية.";
-        return;
-    }
-
-    if (minutes(from) === minutes(to)) {
-        $("msg").textContent = "⚠️ وقت النهاية يجب أن يختلف عن وقت البداية.";
+        $("msg").style.color = "#ff9800";
+        $("msg").textContent = "⚠️ يرجى إدخال اسم العميل وتحديد البداية والنهاية.";
         return;
     }
 
     let candidate = {
-        id: editId,
-        date: targetDate,
-        room: room,
-        name: name,
-        phone: phone,
-        from: from,
-        to: to,
-        deposit: Number($("fDep").value || 0),
-        pay: $("fPay").value,
-        status: status,
-        notes: $("fNotes").value.trim()
+        date: targetDate, room: room, name: name, phone: phone, from: from, to: to,
+        deposit: Number($("fDep").value || 0), pay: $("fPay").value, status: status, notes: $("fNotes").value.trim()
     };
 
     if (status !== "cancelled") {
-        let conflict = bookings.some(function(b) {
-            return (
-                b.id !== editId &&
-                (b.date || today()) === targetDate &&
-                b.room === room &&
-                b.status !== "cancelled" &&
-                b.status !== "done" &&
-                overlap(candidate, b)
-            );
-        });
-
+        let conflict = bookings.some(b => (
+            b.id !== editId && b.date === targetDate && b.room === room && b.status !== "cancelled" && overlap(candidate, b)
+        ));
         if (conflict) {
-            $("msg").textContent = "⚠️ عذراً، الروم محجوز بالفعل في هذا الوقت لهذا اليوم.";
+            $("msg").style.color = "#ff5252";
+            $("msg").textContent = "⚠️ عذراً، الروم محجوز بالفعل في هذه الفترة.";
             return;
         }
     }
 
-    if (editId) {
-        let index = bookings.findIndex(b => b.id === editId);
-        bookings[index] = { ...bookings[index], ...candidate };
-    } else {
-        candidate.id = Date.now().toString();
-        bookings.push(candidate);
-    }
-
-    saveBookings();
-    
+    saveToCloud(candidate, editId);
     $("datePick").value = targetDate;
     clearForm();
-    renderAll();
-    $("msg").textContent = "✅ تم حفظ الحجز في الذاكرة بنجاح.";
+    $("msg").style.color = "#4caf50";
+    $("msg").textContent = "✅ تم الحفظ والمزامنة مع جميع الأجهزة بنجاح!";
 };
 
 $("cancelEditBtn").onclick = clearForm;
 $("clearForm").onclick = clearForm;
 
-/* =========================
-   CSV EXPORT
-========================= */
-$("exportBtn").onclick = function() {
-    let rows = visibleBookings();
-    let csv = [
-        ["التاريخ", "الروم", "العميل", "الهاتف", "من", "إلى", "المدة بالساعات", "الديبوزت", "طريقة الدفع", "الحالة", "ملاحظات"]
-    ];
-
-    rows.forEach(function(b) {
-        let dur = getDurationHours(b.from, b.to);
-        let dep = Number(b.deposit || 0);
-
-        csv.push([
-            b.date || today(),
-            b.room,
-            b.name,
-            b.phone || "",
-            b.from,
-            b.to,
-            dur.toFixed(1),
-            dep,
-            b.pay,
-            statusName(b.status),
-            b.notes || ""
-        ]);
-    });
-
-    let text = csv.map(row => row.map(x => `"${String(x || "").replace(/"/g, '""')}"`).join(",")).join("\n");
-    let blob = new Blob(["\ufeff" + text], { type: "text/csv;charset=utf-8" });
-    let a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `RED90_Bookings_${$("datePick").value || today()}.csv`;
-    a.click();
-};
-
-/* =========================
-   EVENTS & LISTENERS
-========================= */
-let initialDay = today();
-$("datePick").value = initialDay;
-$("fDate").value = initialDay;
-
-$("datePick").onchange = function() {
-    $("fDate").value = this.value;
-    renderAll();
-};
-
-$("roomFilter").onchange = renderAll;
-$("statusFilter").onchange = renderAll;
-$("search").oninput = renderAll;
-$("walkTime").onchange = renderAvailability;
-
-$("fFrom").oninput = updateCalculations;
-$("fTo").oninput = updateCalculations;
-$("fDep").oninput = updateCalculations;
-
-$("findBtn").onclick = function() {
-    renderAvailability();
-    document.querySelector(".side").scrollIntoView({ behavior: "smooth" });
-};
-
-/* =========================
-   RENDER ALL
-========================= */
 function renderAll() {
     updateDate();
     renderTimeline();
@@ -1429,11 +767,15 @@ function renderAll() {
     renderStats();
 }
 
-/* =========================
-   INIT ON LOAD
-========================= */
-loadBookings();
-updateCalculations();
+let initDay = today();
+$("datePick").value = initDay;
+$("fDate").value = initDay;
+$("datePick").onchange = () => { $("fDate").value = $("datePick").value; renderAll(); };
+$("roomFilter").onchange = renderAll;
+$("statusFilter").onchange = renderAll;
+$("search").oninput = renderAll;
+
+updateMasterUI();
 renderAll();
 </script>
 
